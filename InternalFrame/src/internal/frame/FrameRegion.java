@@ -17,12 +17,6 @@ public class FrameRegion extends Region{
 	protected FrameRegion(double width, double height, String title) {
 		titleBar = new BorderPane();
 		pane = new BorderPane();
-		pane.snapToPixelProperty().addListener(new ChangeListener<Boolean>(){
-
-			@Override
-			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-				System.out.println(newValue);
-			}});
 		pane.setPrefSize(width, height);
 		pane.setStyle("-fx-border-width: 1; -fx-border-color: black");
 

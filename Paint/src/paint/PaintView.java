@@ -186,6 +186,8 @@ public class PaintView extends BorderPane {
 		MenuItem paste = new MenuItem("paste");
 		ContextMenu menu = new ContextMenu(paste);
 		GraphicsContext gc = canvas.getGraphicsContext2D();
+//		gc.setFontSmoothingType(FontSmoothingType.);
+//		gc.al
 		canvas.setPickOnBounds(false);
 		gc.setFill(Color.WHITE);
 		gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
@@ -212,25 +214,25 @@ public class PaintView extends BorderPane {
 			}else if(tools.getSelectedTool() == PaintTools.TEXT){
 				gc.setFont(tools.getTextArgs().getFont());
 //				gc.setStroke(tools.getTextArgs().getColor());
-				gc.strokeText(tools.getTextArgs().getText(), e.getX(), e.getY());
+				gc.strokeText(tools.getTextArgs().getText(), Math.floor(e.getX()), Math.floor(e.getY()));
 			}else {
 				gc.setLineWidth(tools.getBurshSize());
 //				gc.setStroke(tools.getColor());
 				gc.beginPath();
-				gc.moveTo(e.getX(), e.getY());
-				gc.lineTo(e.getX(), e.getY());
+				gc.moveTo(Math.floor(e.getX()), Math.floor(e.getY()));
+				gc.lineTo(Math.floor(e.getX()), Math.floor(e.getY()));
 				gc.stroke();
 			}
 		});
 
 		canvas.setOnMouseDragged(e -> {
 			if (tools.getSelectedTool() == PaintTools.RUBBER) {
-				gc.clearRect(e.getX() - (tools.getBurshSize() / 2), e.getY() - (tools.getBurshSize() / 2), tools.getBurshSize(), tools.getBurshSize());
+				gc.clearRect(Math.floor(e.getX()) - (tools.getBurshSize() / 2), Math.floor(e.getY()) - (tools.getBurshSize() / 2), tools.getBurshSize(), tools.getBurshSize());
 			}else if(tools.getSelectedTool() == PaintTools.TEXT){
 				System.out.println("selected");
-				gc.strokeText(tools.getTextArgs().getText(), e.getX(), e.getY());
+				gc.strokeText(tools.getTextArgs().getText(), Math.floor(e.getX()), Math.floor(e.getY()));
 			} else {
-				gc.lineTo(e.getX(), e.getY());
+				gc.lineTo(Math.floor(e.getX()), Math.floor(e.getY()));
 				gc.stroke();
 			}
 		});
