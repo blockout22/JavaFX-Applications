@@ -4,12 +4,21 @@ import java.io.File;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.event.EventHandler;
+import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -24,6 +33,7 @@ public class PaintView extends BorderPane {
 	private SimpleDoubleProperty widthProperty = new SimpleDoubleProperty();
 	private SimpleDoubleProperty heightProperty = new SimpleDoubleProperty();
 
+	private ScrollPane canvasSP;
 	private StackPane canvasPane;
 	private ArrayList<Canvas> layers = new ArrayList<Canvas>();
 	private VBox layerBox;
@@ -33,14 +43,20 @@ public class PaintView extends BorderPane {
 	private ImagePattern imagePattern;
 
 	private PaintTools tools;
+	private boolean CONTROL_DOWN = false;
+	private double CANVAS_SCALE = 1.0;
 
 	public PaintView() {
 		widthProperty.set(400);
 		heightProperty.set(400);
+		canvasSP = new ScrollPane();
 		canvasPane = new StackPane();
 		layerBox = new VBox();
 		addLayer = new Button("Add Layer");
 		tools = new PaintTools();
+		
+		canvasPane.minWidthProperty().bind(Bindings.createDoubleBinding(() -> 
+			canvasSP.getViewportBounds().getWidth(), canvasSP.viewportBoundsProperty()));
 
 		addLayer.setOnAction(e -> {
 			layers.add(addLayer());
@@ -57,11 +73,56 @@ public class PaintView extends BorderPane {
 		} catch (URISyntaxException e1) {
 			e1.printStackTrace();
 		}
+		
+		canvasPane.setFocusTraversable(true);
+		canvasPane.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>(){
+			public void handle(KeyEvent event) {
+				if(event.isControlDown())
+				{
+					CONTROL_DOWN = true;
+				}else{
+					CONTROL_DOWN = false;
+				}
+			}
+		});
+		
+		canvasPane.addEventFilter(KeyEvent.KEY_RELEASED, new EventHandler<KeyEvent>(){
+			public void handle(KeyEvent event) {
+				if(event.isControlDown())
+				{
+					CONTROL_DOWN = true;
+				}else{
+					CONTROL_DOWN = false;
+				}
+			}
+		});
+		
+		canvasPane.addEventFilter(ScrollEvent.ANY, new EventHandler<ScrollEvent>(){
+			public void handle(ScrollEvent event) {
+				System.out.println("SCROLL: " + CONTROL_DOWN + " : " + event.getDeltaY());
+				if(CONTROL_DOWN){
+					if(event.getDeltaY() > 0)
+					{
+						CANVAS_SCALE += 0.1;
+					}else{
+						if(CANVAS_SCALE < 0.2)
+						{
+							return;
+						}
+						CANVAS_SCALE -= 0.1;
+					}
+					System.out.println(CANVAS_SCALE);
+					canvasPane.setScaleX(CANVAS_SCALE);
+					canvasPane.setScaleY(CANVAS_SCALE);
+				}
+			}
+		});
 
 		layers.add(layers.size(), addLayer());
 		updateStackPane();
 		updateLayerBox();
-		setCenter(canvasPane);
+		canvasSP.setContent(canvasPane);
+		setCenter(canvasSP);
 		setRight(layerBox);
 		setTop(tools);
 
@@ -122,6 +183,8 @@ public class PaintView extends BorderPane {
 
 	private Canvas addLayer() {
 		Canvas canvas = new Canvas(widthProperty.get(), heightProperty.get());
+		MenuItem paste = new MenuItem("paste");
+		ContextMenu menu = new ContextMenu(paste);
 		GraphicsContext gc = canvas.getGraphicsContext2D();
 		canvas.setPickOnBounds(false);
 		gc.setFill(Color.WHITE);
@@ -129,14 +192,30 @@ public class PaintView extends BorderPane {
 
 		// gc.setFill(Color.TRANSPARENT);
 		gc.setStroke(tools.getColor());
+		
+		paste.setOnAction(e -> {
+			Clipboard clipboard = Clipboard.getSystemClipboard();
+			Image image = clipboard.getImage();
+//			System.out.println(image.getHeight());
+			gc.drawImage(image, 0, 0);
+		});
+		
+		canvas.setOnContextMenuRequested(e -> {
+			menu.show(this, e.getScreenX(), e.getScreenY());
+		});
 
 		canvas.setOnMousePressed(e -> {
+			gc.setStroke(tools.getColor());
 			if (tools.getSelectedTool() == PaintTools.RUBBER) {
 				// gc.clearRect(x, y, w, h);
 				gc.clearRect(e.getX() - (tools.getBurshSize() / 2), e.getY() - (tools.getBurshSize() / 2), tools.getBurshSize(), tools.getBurshSize());
-			} else {
+			}else if(tools.getSelectedTool() == PaintTools.TEXT){
+				gc.setFont(tools.getTextArgs().getFont());
+//				gc.setStroke(tools.getTextArgs().getColor());
+				gc.strokeText(tools.getTextArgs().getText(), e.getX(), e.getY());
+			}else {
 				gc.setLineWidth(tools.getBurshSize());
-				gc.setStroke(tools.getColor());
+//				gc.setStroke(tools.getColor());
 				gc.beginPath();
 				gc.moveTo(e.getX(), e.getY());
 				gc.lineTo(e.getX(), e.getY());
@@ -147,6 +226,9 @@ public class PaintView extends BorderPane {
 		canvas.setOnMouseDragged(e -> {
 			if (tools.getSelectedTool() == PaintTools.RUBBER) {
 				gc.clearRect(e.getX() - (tools.getBurshSize() / 2), e.getY() - (tools.getBurshSize() / 2), tools.getBurshSize(), tools.getBurshSize());
+			}else if(tools.getSelectedTool() == PaintTools.TEXT){
+				System.out.println("selected");
+				gc.strokeText(tools.getTextArgs().getText(), e.getX(), e.getY());
 			} else {
 				gc.lineTo(e.getX(), e.getY());
 				gc.stroke();
