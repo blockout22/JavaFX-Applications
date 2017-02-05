@@ -8,7 +8,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.ProgressBar;
 import javafx.scene.control.Slider;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
@@ -40,22 +39,28 @@ public class Controls extends HBox {
 	private ContextMenu menu;
 	private MenuItem changeContent;
 	private boolean playing = false;
-
+	
+	private String play_icon = "\u25B6";
+	private String pause_icon = "\u23F8";
+	private String unmute_icon = "\uD83D\uDD07";
+	private String mute_icon = "\uD83D\uDD08";
+	private String fullscreen_icon = "\u26F6";
+	
 	public Controls(MediaView mv) {
 		this.mv = mv;
 		setSpacing(4);
 		fullscreenStage = new Stage();
-		togglePlayPause = new Button("play");
+		togglePlayPause = new Button(play_icon);
 		timeSlider = new Slider();
 		bufferSlider = new Slider();
-		toggleMute = new Button("mute");
+		toggleMute = new Button(mute_icon);
 		volumeSlider = new Slider();
-		toggleFullscreen = new Button("[]");
+		toggleFullscreen = new Button(fullscreen_icon);
 		curTime = new Text("00:00");
 		timeSpacer = new Text("/");
 		finishTime = new Text("00:00");
 		timeStack = new StackPane();
-
+		
 		changeContent = new MenuItem("Change Media");
 		menu = new ContextMenu(changeContent);
 
@@ -80,11 +85,11 @@ public class Controls extends HBox {
 				if (e.getButton() == MouseButton.PRIMARY) {
 					if (!playing) {
 						mv.getMediaPlayer().play();
-						togglePlayPause.setText("pause");
+						togglePlayPause.setText(pause_icon);
 						playing = true;
 					} else {
 						mv.getMediaPlayer().pause();
-						togglePlayPause.setText("play");
+						togglePlayPause.setText(play_icon);
 						playing = false;
 					}
 				}
@@ -96,7 +101,7 @@ public class Controls extends HBox {
 			File f = fc.showOpenDialog(null);
 
 			if (f != null) {
-				togglePlayPause.setText("play");
+				togglePlayPause.setText(play_icon);
 				content.setMedia(f.toURI().toString());
 			}
 		});
@@ -121,11 +126,11 @@ public class Controls extends HBox {
 			} else {
 				if (status == Status.PAUSED || status == Status.READY || status == Status.STOPPED) {
 					mv.getMediaPlayer().play();
-					togglePlayPause.setText("pause");
+					togglePlayPause.setText(pause_icon);
 					playing = true;
 				} else {
 					mv.getMediaPlayer().pause();
-					togglePlayPause.setText("play");
+					togglePlayPause.setText(play_icon);
 					playing = false;
 				}
 			}
@@ -133,16 +138,15 @@ public class Controls extends HBox {
 
 		toggleMute.setOnAction(e -> {
 			if (mv.getMediaPlayer().isMute()) {
-				toggleMute.setText("mute");
+				toggleMute.setText(mute_icon);
 				mv.getMediaPlayer().setMute(false);
 			} else {
-				toggleMute.setText("unmute");
+				toggleMute.setText(unmute_icon);
 				mv.getMediaPlayer().setMute(true);
 			}
 		});
 
 		volumeSlider.setOnMousePressed(e -> {
-			System.out.println(volumeSlider.getValue());
 			mv.getMediaPlayer().setVolume(volumeSlider.getValue() / 100);
 		});
 
@@ -195,7 +199,6 @@ public class Controls extends HBox {
 
 		mv.getMediaPlayer().onReadyProperty().addListener(new ChangeListener<Runnable>() {
 			public void changed(ObservableValue<? extends Runnable> observable, Runnable oldValue, Runnable newValue) {
-				System.out.println(newValue);
 			}
 		});
 
@@ -208,20 +211,17 @@ public class Controls extends HBox {
 
 		mv.getMediaPlayer().statusProperty().addListener(new ChangeListener<Status>() {
 			public void changed(ObservableValue<? extends Status> observable, Status oldValue, Status newValue) {
-				System.out.println("STATUS: " + newValue);
 			}
 		});
 		
 		mv.getMediaPlayer().bufferProgressTimeProperty().addListener(new ChangeListener<Duration>() {
 			public void changed(ObservableValue<? extends Duration> observable, Duration oldValue, Duration newValue) {
-				System.out.println(newValue);
 				bufferSlider.setValue(newValue.toSeconds());
 			}
 		});
 		
 		mv.getMediaPlayer().errorProperty().addListener(new ChangeListener<MediaException>() {
 			public void changed(ObservableValue<? extends MediaException> observable, MediaException oldValue, MediaException newValue) {
-				System.out.println(newValue);
 			}
 		});
 	}
