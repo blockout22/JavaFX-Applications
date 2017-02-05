@@ -17,6 +17,10 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.media.MediaException;
 import javafx.scene.media.MediaPlayer.Status;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.CycleMethod;
+import javafx.scene.paint.LinearGradient;
+import javafx.scene.paint.Stop;
 import javafx.scene.media.MediaView;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
@@ -45,10 +49,12 @@ public class Controls extends HBox {
 	private String unmute_icon = "\uD83D\uDD07";
 	private String mute_icon = "\uD83D\uDD08";
 	private String fullscreen_icon = "\u26F6";
-	
+	private String PLAYER_BAR_STYLE = "-fx-padding: 3px 0px 3px 0px; -fx-background-color: linear-gradient(from 25% 100% to 25% 100%, #58595b, #000000)";
+
 	public Controls(MediaView mv) {
 		this.mv = mv;
 		setSpacing(4);
+		setStyle(PLAYER_BAR_STYLE);
 		fullscreenStage = new Stage();
 		togglePlayPause = new Button(play_icon);
 		timeSlider = new Slider();
@@ -187,7 +193,7 @@ public class Controls extends HBox {
 
 		timeStack.getChildren().addAll(bufferSlider, timeSlider);
 		getChildren().addAll(togglePlayPause, curTime, timeSpacer, finishTime, timeStack, toggleMute, volumeSlider, toggleFullscreen);
-		setStyle("-fx-background-color: rgb(255,0,0,1);");
+//		setStyle("-fx-background-color: rgb(255,0,0,1);");
 	}
 
 	public void setupMedia() {
