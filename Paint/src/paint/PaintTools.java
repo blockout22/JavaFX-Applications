@@ -111,7 +111,6 @@ public class PaintTools extends BorderPane {
 					}
 					SnapshotParameters parameters = new SnapshotParameters();
 					parameters.setFill(Color.TRANSPARENT);
-					System.out.println(parameters.getFill());
 					WritableImage snapshot = canvas.snapshot(parameters, null);
 					try {
 						ImageIO.write(SwingFXUtils.fromFXImage(snapshot, null), "png", file);

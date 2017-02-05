@@ -53,9 +53,8 @@ public class PaintView extends BorderPane {
 		layerBox = new VBox();
 		addLayer = new Button("Add Layer");
 		tools = new PaintTools();
-		
-		canvasPane.minWidthProperty().bind(Bindings.createDoubleBinding(() -> 
-			canvasSP.getViewportBounds().getWidth(), canvasSP.viewportBoundsProperty()));
+
+		canvasPane.minWidthProperty().bind(Bindings.createDoubleBinding(() -> canvasSP.getViewportBounds().getWidth(), canvasSP.viewportBoundsProperty()));
 
 		addLayer.setOnAction(e -> {
 			layers.add(addLayer());
@@ -72,45 +71,39 @@ public class PaintView extends BorderPane {
 		} catch (URISyntaxException e1) {
 			e1.printStackTrace();
 		}
-		
+
 		canvasPane.setFocusTraversable(true);
-		canvasPane.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>(){
+		canvasPane.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
 			public void handle(KeyEvent event) {
-				if(event.isControlDown())
-				{
+				if (event.isControlDown()) {
 					CONTROL_DOWN = true;
-				}else{
+				} else {
 					CONTROL_DOWN = false;
 				}
 			}
 		});
-		
-		canvasPane.addEventFilter(KeyEvent.KEY_RELEASED, new EventHandler<KeyEvent>(){
+
+		canvasPane.addEventFilter(KeyEvent.KEY_RELEASED, new EventHandler<KeyEvent>() {
 			public void handle(KeyEvent event) {
-				if(event.isControlDown())
-				{
+				if (event.isControlDown()) {
 					CONTROL_DOWN = true;
-				}else{
+				} else {
 					CONTROL_DOWN = false;
 				}
 			}
 		});
-		
-		canvasPane.addEventFilter(ScrollEvent.ANY, new EventHandler<ScrollEvent>(){
+
+		canvasPane.addEventFilter(ScrollEvent.ANY, new EventHandler<ScrollEvent>() {
 			public void handle(ScrollEvent event) {
-				System.out.println("SCROLL: " + CONTROL_DOWN + " : " + event.getDeltaY());
-				if(CONTROL_DOWN){
-					if(event.getDeltaY() > 0)
-					{
+				if (CONTROL_DOWN) {
+					if (event.getDeltaY() > 0) {
 						CANVAS_SCALE += 0.1;
-					}else{
-						if(CANVAS_SCALE < 0.2)
-						{
+					} else {
+						if (CANVAS_SCALE < 0.2) {
 							return;
 						}
 						CANVAS_SCALE -= 0.1;
 					}
-					System.out.println(CANVAS_SCALE);
 					canvasPane.setScaleX(CANVAS_SCALE);
 					canvasPane.setScaleY(CANVAS_SCALE);
 				}
@@ -134,18 +127,17 @@ public class PaintView extends BorderPane {
 		if (layers.size() > 0) {
 			rect.setStroke(Color.BLACK);
 			canvasPane.getChildren().add(rect);
-		}else{
+		} else {
 			rect.setStroke(Color.RED);
 			Text text = new Text("No Canvas");
 			int height = (int) heightProperty.get() / 2 / 2 / 2;
-			text.setStyle("-fx-font:" + height +  " arial;");
+			text.setStyle("-fx-font:" + height + " arial;");
 			text.setFill(Color.RED);
 			canvasPane.getChildren().add(rect);
 			canvasPane.getChildren().add(text);
 		}
 
 		for (int i = layers.size() - 1; i > -1; i--) {
-			System.out.println(i);
 			canvasPane.getChildren().add(layers.get(i));
 		}
 	}
@@ -154,13 +146,32 @@ public class PaintView extends BorderPane {
 		layerBox.getChildren().clear();
 		layerBox.getChildren().add(addLayer);
 		for (int i = 0; i < layers.size(); i++) {
-			HBox hbox = new HBox();
+			HBox hbox = new HBox(2);
 			CheckBox check = new CheckBox("layer " + (i + 1));
 			Button delete = new Button("X");
 			check.setSelected(true);
 			int layerIndex = i;
 			hbox.getChildren().addAll(check, delete);
 			layerBox.getChildren().add(hbox);
+
+			if (i > 0) {
+				int index = i;
+				Button moveUp = new Button("up");
+				hbox.getChildren().add(moveUp);
+				moveUp.setOnAction(e -> {
+					swap(index, index - 1);
+				});
+			}
+
+			if (i < layers.size() - 1) {
+				int index = i;
+				Button moveDown = new Button("down");
+				hbox.getChildren().add(moveDown);
+				moveDown.setOnAction(e -> {
+					swap(index, index + 1);
+				});
+			}
+
 			delete.setOnAction(e -> {
 				layers.remove(layerIndex);
 				layerBox.getChildren().remove(hbox);
@@ -185,22 +196,21 @@ public class PaintView extends BorderPane {
 		MenuItem paste = new MenuItem("paste");
 		ContextMenu menu = new ContextMenu(paste);
 		GraphicsContext gc = canvas.getGraphicsContext2D();
-//		gc.setFontSmoothingType(FontSmoothingType.);
-//		gc.al
+		// gc.setFontSmoothingType(FontSmoothingType.);
+		// gc.al
 		canvas.setPickOnBounds(false);
 		gc.setFill(Color.WHITE);
 		gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
 
 		// gc.setFill(Color.TRANSPARENT);
 		gc.setStroke(tools.getColor());
-		
+
 		paste.setOnAction(e -> {
 			Clipboard clipboard = Clipboard.getSystemClipboard();
 			Image image = clipboard.getImage();
-//			System.out.println(image.getHeight());
 			gc.drawImage(image, 0, 0);
 		});
-		
+
 		canvas.setOnContextMenuRequested(e -> {
 			menu.show(this, e.getScreenX(), e.getScreenY());
 		});
@@ -210,13 +220,13 @@ public class PaintView extends BorderPane {
 			if (tools.getSelectedTool() == PaintTools.RUBBER) {
 				// gc.clearRect(x, y, w, h);
 				gc.clearRect(e.getX() - (tools.getBurshSize() / 2), e.getY() - (tools.getBurshSize() / 2), tools.getBurshSize(), tools.getBurshSize());
-			}else if(tools.getSelectedTool() == PaintTools.TEXT){
+			} else if (tools.getSelectedTool() == PaintTools.TEXT) {
 				gc.setFont(tools.getTextArgs().getFont());
-//				gc.setStroke(tools.getTextArgs().getColor());
+				// gc.setStroke(tools.getTextArgs().getColor());
 				gc.strokeText(tools.getTextArgs().getText(), Math.floor(e.getX()), Math.floor(e.getY()));
-			}else {
+			} else {
 				gc.setLineWidth(tools.getBurshSize());
-//				gc.setStroke(tools.getColor());
+				// gc.setStroke(tools.getColor());
 				gc.beginPath();
 				gc.moveTo(Math.floor(e.getX()), Math.floor(e.getY()));
 				gc.lineTo(Math.floor(e.getX()), Math.floor(e.getY()));
@@ -227,8 +237,7 @@ public class PaintView extends BorderPane {
 		canvas.setOnMouseDragged(e -> {
 			if (tools.getSelectedTool() == PaintTools.RUBBER) {
 				gc.clearRect(Math.floor(e.getX()) - (tools.getBurshSize() / 2), Math.floor(e.getY()) - (tools.getBurshSize() / 2), tools.getBurshSize(), tools.getBurshSize());
-			}else if(tools.getSelectedTool() == PaintTools.TEXT){
-				System.out.println("selected");
+			} else if (tools.getSelectedTool() == PaintTools.TEXT) {
 				gc.strokeText(tools.getTextArgs().getText(), Math.floor(e.getX()), Math.floor(e.getY()));
 			} else {
 				gc.lineTo(Math.floor(e.getX()), Math.floor(e.getY()));
@@ -238,15 +247,19 @@ public class PaintView extends BorderPane {
 
 		canvas.setOnMouseReleased(e -> {
 			gc.closePath();
-			// Random r = new Random();
-			// widthProperty.set(r.nextInt(1000));
-			// heightProperty.set(r.nextInt(1000));
-			// canvas.resize(widthProperty.get(), heightProperty.get());
 		});
 
-		// getChildren().add(canvas);
-
 		return canvas;
+	}
+
+	private void swap(int i, int j) {
+		Canvas swap1 = layers.get(i);
+		Canvas swap2 = layers.get(j);
+
+		layers.set(i, swap2);
+		layers.set(j, swap1);
+		updateStackPane();
+		updateLayerBox();
 	}
 
 }
