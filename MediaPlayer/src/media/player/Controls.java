@@ -4,6 +4,7 @@ import java.io.File;
 
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.geometry.Bounds;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
@@ -16,10 +17,12 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.media.MediaException;
+import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaPlayer.Status;
 import javafx.scene.media.MediaView;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -30,7 +33,7 @@ public class Controls extends HBox {
 	private Button togglePlayPause, toggleMute, toggleFullscreen;
 	private Slider timeSlider, bufferSlider, volumeSlider;
 	private Text curTime, timeSpacer, finishTime;
-	private StackPane timeStack; 
+	private StackPane timeStack;
 
 	private boolean isFullscreen = false;
 	private PlayerPane content;
@@ -39,13 +42,16 @@ public class Controls extends HBox {
 	private ContextMenu menu;
 	private MenuItem changeContent;
 	private boolean playing = false;
-	
+
 	private String play_icon = "\u25B6";
 	private String pause_icon = "\u23F8";
 	private String unmute_icon = "\uD83D\uDD07";
 	private String mute_icon = "\uD83D\uDD08";
 	private String fullscreen_icon = "\u26F6";
 	private String PLAYER_BAR_STYLE = "-fx-padding: 3px 0px 3px 0px; -fx-background-color: linear-gradient(from 25% 100% to 25% 100%, #58595b, #000000)";
+
+	private MediaView preview;
+	private Popup pop = new Popup();
 
 	public Controls(MediaView mv) {
 		this.mv = mv;
@@ -62,19 +68,19 @@ public class Controls extends HBox {
 		timeSpacer = new Text("/");
 		finishTime = new Text("00:00");
 		timeStack = new StackPane();
-		
+
 		changeContent = new MenuItem("Change Media");
 		menu = new ContextMenu(changeContent);
 
-//		bufferSlider.setDisable(false);
-//		setHgrow(timeSlider, Priority.ALWAYS);
-//		setHgrow(bufferSlider, Priority.ALWAYS);
+		// bufferSlider.setDisable(false);
+		// setHgrow(timeSlider, Priority.ALWAYS);
+		// setHgrow(bufferSlider, Priority.ALWAYS);
 		setHgrow(timeStack, Priority.ALWAYS);
 		mv.setPreserveRatio(false);
-//		timeSlider.setMinWidth(50);
+		// timeSlider.setMinWidth(50);
 		timeSlider.setMaxWidth(Double.MAX_VALUE);
 		bufferSlider.setMaxWidth(Double.MAX_VALUE);
-//		timeStack.setMaxWidth(Double.MAX_VALUE);
+		// timeStack.setMaxWidth(Double.MAX_VALUE);
 
 		mv.setOnContextMenuRequested(e -> {
 			menu.show(mv, e.getScreenX(), e.getScreenY());
@@ -118,6 +124,26 @@ public class Controls extends HBox {
 
 		timeSlider.setOnMouseDragged(e -> {
 			mv.getMediaPlayer().seek(Duration.seconds(timeSlider.getValue()));
+		});
+		
+		timeSlider.setOnMouseEntered(e -> {
+			pop.show(this.getScene().getWindow());
+			pop.setX(e.getScreenX());
+			pop.setY(e.getScreenY() - 100);
+		});
+
+		timeSlider.setOnMouseMoved(e -> {
+			double total = mv.getMediaPlayer().getMedia().getDuration().toSeconds();
+			Bounds b = timeSlider.localToScene(timeSlider.getBoundsInLocal());
+			double pos = e.getSceneX();
+			double perc = pos / (b.getMaxX()) * 100;
+			double seekTime = preview.getMediaPlayer().getMedia().getDuration().toSeconds() / perc;
+			System.out.println(b.getMinX() + " : " + b.getMaxX() + " : " + (perc) + " : " + seekTime);
+			
+		});
+
+		timeSlider.setOnMouseExited(e -> {
+			pop.hide();
 		});
 
 		togglePlayPause.setOnAction(e -> {
@@ -189,10 +215,14 @@ public class Controls extends HBox {
 
 		timeStack.getChildren().addAll(bufferSlider, timeSlider);
 		getChildren().addAll(togglePlayPause, curTime, timeSpacer, finishTime, timeStack, toggleMute, volumeSlider, toggleFullscreen);
-//		setStyle("-fx-background-color: rgb(255,0,0,1);");
+		// setStyle("-fx-background-color: rgb(255,0,0,1);");
 	}
 
 	public void setupMedia() {
+		preview = new MediaView(new MediaPlayer(mv.getMediaPlayer().getMedia()));
+		pop.getContent().add(preview);
+		preview.setFitHeight(100);
+		preview.setFitHeight(100);
 		mv.getMediaPlayer().setOnReady(new Runnable() {
 			public void run() {
 				updateValues();
@@ -215,13 +245,13 @@ public class Controls extends HBox {
 			public void changed(ObservableValue<? extends Status> observable, Status oldValue, Status newValue) {
 			}
 		});
-		
+
 		mv.getMediaPlayer().bufferProgressTimeProperty().addListener(new ChangeListener<Duration>() {
 			public void changed(ObservableValue<? extends Duration> observable, Duration oldValue, Duration newValue) {
 				bufferSlider.setValue(newValue.toSeconds());
 			}
 		});
-		
+
 		mv.getMediaPlayer().errorProperty().addListener(new ChangeListener<MediaException>() {
 			public void changed(ObservableValue<? extends MediaException> observable, MediaException oldValue, MediaException newValue) {
 			}

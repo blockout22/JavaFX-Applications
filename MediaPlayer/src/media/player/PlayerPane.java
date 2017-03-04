@@ -18,7 +18,7 @@ public class PlayerPane extends Pane {
 	public PlayerPane() {
 		mv = new MediaView(new MediaPlayer(new Media("http://clips.vorwaerts-gmbh.de/VfE_html5.mp4")));
 		controls = new Controls(mv);
-
+		
 		mv.boundsInLocalProperty().addListener(new ChangeListener<Bounds>() {
 			public void changed(ObservableValue<? extends Bounds> observable, Bounds oldValue, Bounds newValue) {
 				double height = newValue.getHeight();
@@ -55,8 +55,8 @@ public class PlayerPane extends Pane {
 			 }else{
 				 controls.setVisible(false);
 			 }
-			 System.out.println("HEIGHT: " + getHeight());
-			 System.out.println(e.getX() + " : " + e.getY());
+//			 System.out.println("HEIGHT: " + getHeight());
+//			 System.out.println(e.getX() + " : " + e.getY());
 		});
 
 		System.out.println(mv.boundsInLocalProperty().getValue().getHeight());
